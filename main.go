@@ -3,23 +3,28 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/index.html")
+}
 func main() {
 
 	fmt.Println("Server start ")
 
-	staticfile := http.FileServer(http.Dir("static"))
+	r := mux.NewRouter()
 
-	http.Handle("/", staticfile)
+	cssHandler := http.FileServer(http.Dir("./static/css/"))
+	imagesHandler := http.FileServer(http.Dir("./static/img/"))
+	jsHandler := http.FileServer(http.Dir("./static/js"))
 
-	http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Index Page")
-	})
-
-	http.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "About Page")
-	})
+	http.Handle("/css/", http.StripPrefix("/css/", cssHandler))
+	http.Handle("/img/", http.StripPrefix("/img/", imagesHandler))
+	http.Handle("/js/", http.StripPrefix("/js/", jsHandler))
+	r.HandleFunc("/", HomeHandler)
+	http.Handle("/", r)
 
 	http.ListenAndServe(":8080", nil)
 }
